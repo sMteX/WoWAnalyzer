@@ -1,6 +1,5 @@
 import Analyzer, { SELECTED_PLAYER_PET } from 'parser/core/Analyzer';
 import Events from 'parser/core/Events';
-import EventEmitter from 'parser/core/modules/EventEmitter';
 
 import SPELLS from 'common/SPELLS';
 import RESOURCE_TYPES from 'game/RESOURCE_TYPES';
@@ -14,7 +13,6 @@ const test = false;
 
 class WildImpEnergyHandler extends Analyzer {
   static dependencies = {
-    eventEmitter: EventEmitter,
     demoPets: DemoPets,
   };
 
@@ -59,12 +57,6 @@ class WildImpEnergyHandler extends Analyzer {
       pet.despawn(event.timestamp, DESPAWN_REASONS.ZERO_ENERGY);
       pet.pushHistory(event.timestamp, 'Killed by 0 energy', event);
       test && this.log('Despawning Wild Imp', pet);
-      this.eventEmitter.fabricateEvent({
-        timestamp: event.timestamp,
-        type: 'petdespawn',
-        sourceID: pet.id,
-        sourceInstance: pet.instance,
-      });
     }
   }
 

@@ -21,7 +21,6 @@ import DemonicTyrantHandler from './modules/pets/DemoPets/DemonicTyrantHandler';
 import ImplosionHandler from './modules/pets/DemoPets/ImplosionHandler';
 import PetTimelineTab from './modules/pets/PetTimelineTab';
 import PrepullPetNormalizer from './modules/pets/normalizers/PrepullPetNormalizer';
-import PetDespawnNormalizer from './modules/pets/normalizers/PetDespawnNormalizer';
 
 import PowerSiphonNormalizer from './modules/talents/normalizers/PowerSiphonNormalizer';
 
@@ -74,7 +73,6 @@ class CombatLogParser extends CoreCombatLogParser {
     implosionHandler: ImplosionHandler,
     petTimelineTab: PetTimelineTab,
     prepullPetNormalizer: PrepullPetNormalizer,
-    petDespawnNormalizer: PetDespawnNormalizer,
 
     // Normalizers
     powerSiphonNormalizer: PowerSiphonNormalizer,
