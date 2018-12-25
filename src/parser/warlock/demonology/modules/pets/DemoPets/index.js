@@ -1,4 +1,5 @@
 import Analyzer from 'parser/core/Analyzer';
+import EventFilter from 'parser/core/EventFilter';
 
 import Timeline from '../Timeline';
 import PetDamage from '../PetDamage';
@@ -10,6 +11,11 @@ class DemoPets extends Analyzer {
   timeline = new Timeline();
 
   // API
+
+  // petdespawn events are triggered in PetDespawnNormalizer and several handlers that are part of this whole pet tracking system
+  static get petdespawn() {
+    return new EventFilter('petdespawn');
+  }
 
   get currentPets() {
     return this._getPets();

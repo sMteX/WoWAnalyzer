@@ -1,6 +1,7 @@
 import Analyzer, { SELECTED_PLAYER } from 'parser/core/Analyzer';
 import { encodeTargetString } from 'parser/shared/modules/EnemyInstances';
 import Events from 'parser/core/Events';
+import EventEmitter from 'parser/core/modules/EventEmitter';
 
 import SPELLS from 'common/SPELLS';
 
@@ -13,6 +14,7 @@ const debug = false;
 
 class ImplosionHandler extends Analyzer {
   static dependencies = {
+    eventEmitter: EventEmitter,
     demoPets: DemoPets,
   };
 
@@ -89,6 +91,12 @@ class ImplosionHandler extends Analyzer {
     imps[0].despawn(event.timestamp, DESPAWN_REASONS.IMPLOSION);
     imps[0].setMeta(META_CLASSES.DESTROYED, META_TOOLTIPS.IMPLODED);
     imps[0].pushHistory(event.timestamp, 'Killed by Implosion', event);
+    this.eventEmitter.fabricateEvent({
+      timestamp: event.timestamp,
+      type: 'petdespawn',
+      sourceID: imps[0].id,
+      sourceInstance: imps[0].instance,
+    });
   }
 
   _getDistance(x1, y1, x2, y2) {

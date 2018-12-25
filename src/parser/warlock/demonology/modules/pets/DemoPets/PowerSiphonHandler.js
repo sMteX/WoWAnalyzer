@@ -1,6 +1,7 @@
 import Analyzer, { SELECTED_PLAYER } from 'parser/core/Analyzer';
 import { encodeTargetString } from 'parser/shared/modules/EnemyInstances';
 import Events from 'parser/core/Events';
+import EventEmitter from 'parser/core/modules/EventEmitter';
 
 import SPELLS from 'common/SPELLS';
 
@@ -13,6 +14,7 @@ const test = false;
 
 class PowerSiphonHandler extends Analyzer {
   static dependencies = {
+    eventEmitter: EventEmitter,
     demoPets: DemoPets,
   };
 
@@ -47,6 +49,12 @@ class PowerSiphonHandler extends Analyzer {
       imp.setMeta(META_CLASSES.DESTROYED, META_TOOLTIPS.POWER_SIPHON);
       imp.pushHistory(event.timestamp, 'Killed by Power Siphon', event);
       test && this.log(`Despawning imp`, imp);
+      this.eventEmitter.fabricateEvent({
+        timestamp: event.timestamp,
+        type: 'petdespawn',
+        sourceID: imp.id,
+        sourceInstance: imp.instance,
+      });
     });
   }
 }

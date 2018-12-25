@@ -1,5 +1,6 @@
 import Analyzer, { SELECTED_PLAYER } from 'parser/core/Analyzer';
 import Events from 'parser/core/Events';
+import EventEmitter from 'parser/core/modules/EventEmitter';
 
 import SPELLS from 'common/SPELLS';
 
@@ -12,6 +13,7 @@ const test = false;
 
 class DemonicTyrantHandler extends Analyzer {
   static dependencies = {
+    eventEmitter: EventEmitter,
     demoPets: DemoPets,
   };
 
@@ -37,6 +39,12 @@ class DemonicTyrantHandler extends Analyzer {
       if (this._hasDemonicConsumption && isWildImp(pet.guid)) {
         test && this.log('Wild Imp killed because Demonic Consumption', pet);
         pet.despawn(event.timestamp, DESPAWN_REASONS.DEMONIC_CONSUMPTION);
+        this.eventEmitter.fabricateEvent({
+          timestamp: event.timestamp,
+          type: 'petdespawn',
+          sourceID: pet.id,
+          sourceInstance: pet.instance,
+        });
         pet.setMeta(META_CLASSES.DESTROYED, META_TOOLTIPS.DEMONIC_CONSUMPTION);
         pet.pushHistory(event.timestamp, 'Killed by Demonic Consumption', event);
       }
