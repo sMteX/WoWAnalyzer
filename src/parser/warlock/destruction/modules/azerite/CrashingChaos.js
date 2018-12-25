@@ -1,9 +1,11 @@
 import React from 'react';
 
-import Analyzer from 'parser/core/Analyzer';
+import Analyzer, { SELECTED_PLAYER } from 'parser/core/Analyzer';
+import Events from 'parser/core/Events';
 
 import SPELLS from 'common/SPELLS';
 import { formatThousands } from 'common/format';
+import SpellLink from 'common/SpellLink';
 
 import TraitStatisticBox from 'interface/others/TraitStatisticBox';
 import ItemDamageDone from 'interface/others/ItemDamageDone';
@@ -17,9 +19,48 @@ class CrashingChaos extends Analyzer {
     core: CrashingChaosChaoticInfernoCore,
   };
 
+  _buffedChaosBolts = 0;
+  _buffCount = 0;
+
   constructor(...args) {
     super(...args);
     this.active = this.selectedCombatant.hasTrait(SPELLS.CRASHING_CHAOS.id);
+
+    this.addEventListener(Events.cast.by(SELECTED_PLAYER).spell(SPELLS.CHAOS_BOLT), this.onChaosBoltCast);
+    this.addEventListener(Events.applybuff.by(SELECTED_PLAYER).spell(SPELLS.CRASHING_CHAOS_BUFF), this.onCCapply);
+  }
+
+  onChaosBoltCast() {
+    if (this.selectedCombatant.hasBuff(SPELLS.CRASHING_CHAOS_BUFF.id)) {
+      this._buffedChaosBolts += 1;
+    }
+  }
+
+  onCCapply() {
+    this._buffCount += 1;
+  }
+
+  get suggestionThresholds() {
+    const avgChaosBoltsPerCC = (this._buffedChaosBolts / this._buffCount) || 0;
+    return {
+      actual: avgChaosBoltsPerCC,
+      isLessThan: {
+        minor: 5,
+        average: 4,
+        major: 3,
+      },
+      style: 'number',
+    };
+  }
+
+  suggestions(when) {
+    when(this.suggestionThresholds)
+      .addSuggestion((suggest, actual, recommended) => {
+        return suggest(<>You aren't utilizing the <SpellLink id={SPELLS.CRASHING_CHAOS.id} /> buff well enough. Try to pool Soul Shards and at least 1 <SpellLink id={SPELLS.CONFLAGRATE.id} /> stack before dropping Infernal and then cast as many Chaos Bolts as you can.</>)
+          .icon(SPELLS.CRASHING_CHAOS.icon)
+          .actual(`${actual} average Chaos Bolts per Crashing Chaos buff.`)
+          .recommended(`> ${recommended} Chaos Bolts are recommended`);
+      });
   }
 
   statistic() {

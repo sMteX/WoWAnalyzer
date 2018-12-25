@@ -21,9 +21,8 @@ class ShadowsBite extends Analyzer {
   static dependencies = {
     statTracker: StatTracker,
   };
-  _totalDemonbolts = 0;
-  _demonboltsWithSB = 0;
-  _sbCount = 0;
+  _buffedDemonbolts = 0;
+  _buffCount = 0;
 
   bonus = 0;
   damage = 0;
@@ -59,18 +58,22 @@ class ShadowsBite extends Analyzer {
   }
 
   onSBapply() {
-    this._sbCount += 1;
+    this._buffCount += 1;
   }
 
   onDemonboltCast(event) {
     // Shadow's Bite snapshots the bonus on cast
+    const hasSB = this.selectedCombatant.hasBuff(SPELLS.SHADOWS_BITE_BUFF.id);
     this._queue.push({
       timestamp: event.timestamp,
       targetID: event.targetID,
       targetInstance: event.targetInstance,
-      applySB: this.selectedCombatant.hasBuff(SPELLS.SHADOWS_BITE_BUFF.id),
+      applySB: hasSB,
       intellect: this.statTracker.currentIntellectRating,
     });
+    if (hasSB) {
+      this._buffedDemonbolts += 1;
+    }
     debug && this.log('Pushed cast into queue, current queue: ', JSON.parse(JSON.stringify(this._queue)));
   }
 
@@ -89,20 +92,18 @@ class ShadowsBite extends Analyzer {
     const pairedCast = this._queue[castIndex];
     debug && this.log('Paired damage event with queued cast', pairedCast);
 
-    this._totalDemonbolts += 1;
     if (pairedCast.applySB) {
       const [ bonusDamage ] = calculateBonusAzeriteDamage(event, [this.bonus], DEMONBOLT_SP_COEFFICIENT, pairedCast.intellect);
       debug && this.log(`Bonus damage: ${bonusDamage}`);
 
       this.damage += bonusDamage;
-      this._demonboltsWithSB += 1;
     }
 
     this._queue.splice(castIndex, 1);
   }
 
   get suggestionThresholds() {
-    const avgDemonboltsPerSB = (this._demonboltsWithSB / this._sbCount) || 0;
+    const avgDemonboltsPerSB = (this._buffedDemonbolts / this._buffCount) || 0;
     return {
       actual: avgDemonboltsPerSB,
       isLessThan: {
