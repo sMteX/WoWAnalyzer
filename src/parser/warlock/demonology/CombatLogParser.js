@@ -7,7 +7,7 @@ import AlwaysBeCasting from './modules/features/AlwaysBeCasting';
 import CooldownThroughputTracker from './modules/features/CooldownThroughputTracker';
 import Felstorm from './modules/features/Felstorm';
 import Checklist from './modules/features/Checklist/Module';
-
+import DemonicCore from './modules/features/DemonicCore';
 
 import SoulShardTracker from './modules/soulshards/SoulShardTracker';
 import SoulShardDetails from './modules/soulshards/SoulShardDetails';
@@ -57,6 +57,7 @@ class CombatLogParser extends CoreCombatLogParser {
     damageDone: [DamageDone, { showStatistic: true }],
     felstorm: Felstorm,
     checklist: Checklist,
+    demonicCore: DemonicCore,
 
     // Core
     soulShardTracker: SoulShardTracker,

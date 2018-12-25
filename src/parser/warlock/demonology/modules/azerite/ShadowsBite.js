@@ -11,6 +11,7 @@ import { calculateAzeriteEffects } from 'common/stats';
 
 import TraitStatisticBox from 'interface/others/TraitStatisticBox';
 import ItemDamageDone from 'interface/others/ItemDamageDone';
+import SpellLink from 'common/SpellLink';
 
 const DEMONBOLT_SP_COEFFICIENT = 0.667;
 const MAX_TRAVEL_TIME = 2000;
@@ -20,6 +21,10 @@ class ShadowsBite extends Analyzer {
   static dependencies = {
     statTracker: StatTracker,
   };
+  _totalDemonbolts = 0;
+  _demonboltsWithSB = 0;
+  _sbCount = 0;
+
   bonus = 0;
   damage = 0;
 
@@ -50,6 +55,11 @@ class ShadowsBite extends Analyzer {
 
     this.addEventListener(Events.cast.by(SELECTED_PLAYER).spell(SPELLS.DEMONBOLT), this.onDemonboltCast);
     this.addEventListener(Events.damage.by(SELECTED_PLAYER).spell(SPELLS.DEMONBOLT), this.onDemonboltDamage);
+    this.addEventListener(Events.applybuff.by(SELECTED_PLAYER).spell(SPELLS.SHADOWS_BITE_BUFF), this.onSBapply);
+  }
+
+  onSBapply() {
+    this._sbCount += 1;
   }
 
   onDemonboltCast(event) {
@@ -79,14 +89,39 @@ class ShadowsBite extends Analyzer {
     const pairedCast = this._queue[castIndex];
     debug && this.log('Paired damage event with queued cast', pairedCast);
 
+    this._totalDemonbolts += 1;
     if (pairedCast.applySB) {
       const [ bonusDamage ] = calculateBonusAzeriteDamage(event, [this.bonus], DEMONBOLT_SP_COEFFICIENT, pairedCast.intellect);
       debug && this.log(`Bonus damage: ${bonusDamage}`);
 
       this.damage += bonusDamage;
+      this._demonboltsWithSB += 1;
     }
 
     this._queue.splice(castIndex, 1);
+  }
+
+  get suggestionThresholds() {
+    const avgDemonboltsPerSB = (this._demonboltsWithSB / this._sbCount) || 0;
+    return {
+      actual: avgDemonboltsPerSB,
+      isLessThan: {
+        minor: 3,
+        average: 2,
+        major: 1,
+      },
+      style: 'number',
+    };
+  }
+
+  suggestions(when) {
+    when(this.suggestionThresholds)
+      .addSuggestion((suggest, actual, recommended) => {
+        return suggest(<>You aren't utilizing the <SpellLink id={SPELLS.SHADOWS_BITE.id} /> buff well. Try to save at least 2 or 3 <SpellLink id={SPELLS.DEMONIC_CORE_BUFF.id} /> stacks to fire once you have the buff.</>)
+          .icon(SPELLS.SHADOWS_BITE.icon)
+          .actual(`${actual} average Demonbolts per Shadow's Bite proc.`)
+          .recommended(`> ${recommended} are recommended`);
+      });
   }
 
   statistic() {
